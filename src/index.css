@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: #FFFBF3;
+  color: #1f2937;
+  font-family: Inter, 'Noto Sans Devanagari', 'Noto Sans Gurmukhi', system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+button, a { touch-action: manipulation; }
+button:disabled { opacity: .6; }
+
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+@keyframes slideup { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* Map markers */
+.bm-pin { background: none; border: 0; filter: drop-shadow(0 2px 3px rgba(0,0,0,.35)); transition: transform .15s; }
+.bm-you { background: none; border: 0; }
+.bm-you-dot {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #1a73e8; border: 3px solid #fff;
+  box-shadow: 0 0 0 0 rgba(26,115,232,.5), 0 1px 4px rgba(0,0,0,.4);
+  animation: bm-pulse 2s infinite;
+}
+@keyframes bm-pulse { 70% { box-shadow: 0 0 0 16px rgba(26,115,232,0), 0 1px 4px rgba(0,0,0,.4); } 100% { box-shadow: 0 0 0 0 rgba(26,115,232,0), 0 1px 4px rgba(0,0,0,.4); } }
+.leaflet-container { font-family: inherit; background: #e8e4da; }
