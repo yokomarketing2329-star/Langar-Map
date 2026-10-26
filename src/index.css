@@ -54,4 +54,5 @@ button:disabled { opacity: .6; }
 .leaflet-container { font-family: inherit; background: #ebe8e2; }
 .leaflet-control-attribution { background: rgba(255,255,255,.7) !important; font-size: 10px; backdrop-filter: blur(4px); }
 .leaflet-bottom { margin-bottom: 9.5rem; }
+.bm-osm .leaflet-tile-pane { filter: saturate(.7) brightness(1.05) contrast(.94); }
 @media (prefers-reduced-motion: reduce) { .bm-dot { transition: none; } .bm-you-dot { animation: none; } }

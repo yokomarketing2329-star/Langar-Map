@@ -82,12 +82,22 @@ export default function MapView({ items, selectedId, userPos, focus, onSelect, o
   useEffect(() => {
     if (!el.current || map.current) return
     const m = L.map(el.current, { zoomControl: false, attributionControl: false }).setView([30.9, 75.85], 12)
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      maxZoom: 19,
-      subdomains: 'abcd',
-      attribution:
-        '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>',
-    }).addTo(m)
+    // CARTO's clean Voyager style now needs a free key (VITE_CARTO_KEY). Without one, use standard OpenStreetMap tiles.
+    const cartoKey = (import.meta.env.VITE_CARTO_KEY as string | undefined)?.trim()
+    if (cartoKey) {
+      L.tileLayer(`https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=${encodeURIComponent(cartoKey)}`, {
+        maxZoom: 19,
+        subdomains: 'abcd',
+        attribution:
+          '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>',
+      }).addTo(m)
+    } else {
+      el.current.classList.add('bm-osm')
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      }).addTo(m)
+    }
     L.control.zoom({ position: 'bottomright' }).addTo(m)
     L.control.attribution({ position: 'bottomleft', prefix: false }).addTo(m)
 
