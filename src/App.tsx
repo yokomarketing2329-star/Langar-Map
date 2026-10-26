@@ -3,6 +3,7 @@ import { List, Locate, Map as MapIcon, Plus, ShieldCheck, WifiOff } from 'lucide
 import MapView, { type Focus } from './components/MapView'
 import ListView from './components/ListView'
 import DetailsSheet from './components/DetailsSheet'
+import PlaceCard from './components/PlaceCard'
 import AddFlow from './components/AddFlow'
 import InstallButton from './components/InstallButton'
 import Sheet from './components/Sheet'
@@ -30,6 +31,7 @@ export default function App() {
   const [filter, setFilter] = useState<FilterKey>('active')
   const [view, setView] = useState<'map' | 'list'>('map')
   const [selectedId, setSelectedId] = useState<string | null>(shortIdFromPath())
+  const [expanded, setExpanded] = useState(shortIdFromPath() !== null)
   const [adding, setAdding] = useState(false)
   const [userPos, setUserPos] = useState<LatLng | null>(null)
   const [focus, setFocus] = useState<Focus | null>(null)
@@ -101,7 +103,7 @@ export default function App() {
 
   // Browser back/forward.
   useEffect(() => {
-    const onPop = () => setSelectedId(shortIdFromPath())
+    const onPop = () => { const id = shortIdFromPath(); setSelectedId(id); setExpanded(id !== null) }
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
   }, [])
@@ -180,8 +182,9 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected, items, selectedId])
 
-  function select(id: string | null) {
+  function select(id: string | null, expand = false) {
     setSelectedId(id)
+    setExpanded(expand)
     history.pushState(null, '', id ? `/bhandara/${id}` : '/')
     if (id && items[id]) setFocus({ lat: items[id].latitude, lng: items[id].longitude, zoom: 16, token: ++focusToken.current })
   }
@@ -195,34 +198,34 @@ export default function App() {
 
   return (
     <div className="relative h-dvh w-full overflow-hidden bg-cream">
-      <MapView items={visible} selectedId={selectedId} userPos={userPos} focus={focus} onSelect={select} onBounds={onBounds} />
+      <MapView items={visible} selectedId={selectedId} userPos={userPos} focus={focus} onSelect={(id) => select(id)} onBounds={onBounds} />
 
       {view === 'list' && (
-        <div className="absolute inset-0 z-10 overflow-y-auto bg-cream pt-[7.5rem]">
-          {!loaded ? <div className="p-8 text-center text-gray-500">{t('loading')}</div> : <ListView items={visible} now={now} onSelect={select} />}
+        <div className="absolute inset-0 z-10 overflow-y-auto bg-cream pt-36">
+          {!loaded ? <div className="p-8 text-center text-gray-500">{t('loading')}</div> : <ListView items={visible} now={now} onSelect={(id) => select(id, true)} />}
         </div>
       )}
 
-      {/* Header */}
-      <header className="absolute inset-x-0 top-0 z-20 space-y-2 bg-gradient-to-b from-cream via-cream/95 to-transparent px-3 pb-3 pt-[max(0.5rem,env(safe-area-inset-top))]">
-        <div className="flex items-center gap-2">
-          <img src="/icons/icon.svg" alt="" className="h-10 w-10 rounded-xl shadow" />
+      {/* Header: frosted top bar + floating filter chips */}
+      <header className="pointer-events-none absolute inset-x-0 top-0 z-20 space-y-2.5 px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
+        <div className="pointer-events-auto flex items-center gap-2 rounded-3xl bg-white/85 py-2 pl-2 pr-2.5 shadow-[0_4px_20px_rgba(60,30,0,0.12)] ring-1 ring-black/5 backdrop-blur-md">
+          <img src="/icons/icon.svg" alt="" className="h-10 w-10 rounded-xl" />
           <div className="min-w-0 flex-1 leading-tight">
-            <div className="truncate text-lg font-extrabold text-saffron-dark">{t('app_name')}</div>
+            <div className="truncate text-[17px] font-extrabold tracking-tight text-saffron-dark">{t('app_name')}</div>
             <div className="truncate text-xs font-semibold text-seva">{t('tagline')}</div>
           </div>
           <InstallButton />
-          <button onClick={() => setPrivacy(true)} aria-label={t('privacy')} className="rounded-full bg-white p-2 shadow ring-1 ring-black/10"><ShieldCheck size={18} /></button>
+          <button onClick={() => setPrivacy(true)} aria-label={t('privacy')} className="rounded-full bg-black/5 p-2 text-gray-700 active:bg-black/10"><ShieldCheck size={18} /></button>
           <select value={lang} aria-label={t('language')} onChange={(e) => setLang(e.target.value as Lang)}
-            className="rounded-full bg-white px-2 py-2 text-sm font-semibold shadow ring-1 ring-black/10">
+            className="rounded-full bg-black/5 px-2 py-2 text-sm font-semibold text-gray-700">
             {LANGS.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
           </select>
         </div>
-        <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">
+        <div className="no-scrollbar pointer-events-auto flex gap-2 overflow-x-auto pb-1">
           {filters.map((f) => (
             <button key={f.k} onClick={() => setFilter(f.k)}
-              className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold shadow-sm ring-1 ${
-                filter === f.k ? 'bg-saffron text-white ring-saffron' : 'bg-white text-gray-700 ring-black/10'}`}>
+              className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold shadow-[0_2px_8px_rgba(60,30,0,0.12)] ring-1 backdrop-blur-md transition-colors ${
+                filter === f.k ? 'bg-saffron text-white ring-saffron' : 'bg-white/90 text-gray-700 ring-black/5'}`}>
               {f.label}
             </button>
           ))}
@@ -230,37 +233,40 @@ export default function App() {
       </header>
 
       {!isConfigured && (
-        <div className="absolute inset-x-3 top-32 z-20 rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700 ring-1 ring-red-200">{t('not_configured')}</div>
+        <div className="absolute inset-x-3 top-40 z-20 rounded-2xl bg-red-50 p-3 text-sm font-semibold text-red-700 ring-1 ring-red-200">{t('not_configured')}</div>
       )}
       {isConfigured && failed && (
-        <div className="absolute inset-x-3 top-32 z-20 flex items-center gap-3 rounded-2xl bg-white p-3 shadow ring-1 ring-black/10">
+        <div className="absolute inset-x-3 top-40 z-20 flex items-center gap-3 rounded-2xl bg-white p-3 shadow ring-1 ring-black/10">
           <WifiOff className="flex-none text-saffron-dark" />
           <div className="min-w-0 flex-1"><div className="font-bold">{t('offline_title')}</div><div className="text-sm text-gray-600">{t('offline_msg')}</div></div>
           <button className="rounded-full bg-saffron px-3 py-2 text-sm font-bold text-white" onClick={() => refresh(true)}>{t('retry')}</button>
         </div>
       )}
-      {gpsMsg && <div className="absolute inset-x-3 top-32 z-20 rounded-2xl bg-white p-3 text-sm shadow ring-1 ring-black/10">{gpsMsg}</div>}
+      {gpsMsg && <div className="absolute inset-x-3 top-40 z-20 rounded-2xl bg-white p-3 text-sm shadow ring-1 ring-black/10">{gpsMsg}</div>}
       {view === 'map' && loaded && !failed && visible.length === 0 && isConfigured && (
         <div className="pointer-events-none absolute inset-x-6 top-1/3 z-10 rounded-2xl bg-white/90 p-4 text-center text-sm font-semibold text-gray-600 shadow">{t('no_results')}</div>
       )}
 
       {/* Bottom controls */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 space-y-3 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <div className={`pointer-events-none absolute inset-x-0 bottom-0 z-20 space-y-3 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] ${selected && !expanded ? 'hidden' : ''}`}>
         <div className="flex items-end justify-between">
           <button onClick={() => setView(view === 'map' ? 'list' : 'map')}
-            className="pointer-events-auto inline-flex items-center gap-2 rounded-full bg-white px-4 py-3 font-bold shadow-lg ring-1 ring-black/10">
+            className="pointer-events-auto inline-flex items-center gap-2 rounded-full bg-white/95 px-4 py-3 font-bold shadow-[0_4px_16px_rgba(60,30,0,0.18)] ring-1 ring-black/5 backdrop-blur-md">
             {view === 'map' ? <List size={20} /> : <MapIcon size={20} />}{view === 'map' ? t('view_list') : t('view_map')}
           </button>
           <button onClick={() => locate(true)} aria-label={t('locate_me')}
-            className="pointer-events-auto rounded-full bg-white p-3 text-[#1a73e8] shadow-lg ring-1 ring-black/10"><Locate size={24} /></button>
+            className="pointer-events-auto rounded-full bg-white/95 p-3 text-[#1a73e8] shadow-[0_4px_16px_rgba(60,30,0,0.18)] ring-1 ring-black/5 backdrop-blur-md"><Locate size={24} /></button>
         </div>
         <button onClick={() => setAdding(true)} disabled={!isConfigured}
-          className="pointer-events-auto flex w-full items-center justify-center gap-2 rounded-3xl bg-saffron px-6 py-4 text-xl font-extrabold text-white shadow-xl active:bg-saffron-dark">
+          className="pointer-events-auto flex w-full items-center justify-center gap-2 rounded-full bg-saffron px-6 py-4 text-lg font-extrabold text-white shadow-[0_8px_24px_rgba(224,123,0,0.45)] active:bg-saffron-dark">
           <Plus size={26} strokeWidth={3} />{t('add_bhandara')}
         </button>
       </div>
 
-      {selected && (
+      {selected && !expanded && (
+        <PlaceCard key={selected.b.id} u={selected} now={now} onOpen={() => setExpanded(true)} onClose={() => select(null)} />
+      )}
+      {selected && expanded && (
         <DetailsSheet key={selected.b.id} u={selected} now={now} onClose={() => select(null)}
           onChanged={(b) => upsert([b], false)} toast={toast} />
       )}
@@ -271,14 +277,14 @@ export default function App() {
             : DEFAULT_CENTER)}
           onClose={() => setAdding(false)}
           onCreated={(b) => { upsert([b], false); setFilter('all'); setFocus({ lat: b.latitude, lng: b.longitude, zoom: 16, token: ++focusToken.current }) }}
-          onOpenExisting={(id) => { setAdding(false); select(id) }}
+          onOpenExisting={(id) => { setAdding(false); select(id, true) }}
           toast={toast}
         />
       )}
       {privacy && <Sheet title={t('privacy')} onClose={() => setPrivacy(false)}><p className="leading-relaxed">{t('privacy_text')}</p></Sheet>}
 
       {toastMsg && (
-        <div className="pointer-events-none absolute inset-x-0 top-28 z-[1100] flex justify-center px-4">
+        <div className="pointer-events-none absolute inset-x-0 top-36 z-[1100] flex justify-center px-4">
           <div className="rounded-full bg-gray-900 px-5 py-3 text-sm font-semibold text-white shadow-xl">{toastMsg}</div>
         </div>
       )}

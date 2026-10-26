@@ -17,10 +17,10 @@ export default function ListView({ items, now, onSelect }: Props) {
         <li key={u.b.id}>
           <button
             onClick={() => onSelect(u.b.short_id)}
-            className="flex w-full gap-3 rounded-2xl bg-white p-3 text-left shadow-sm ring-1 ring-black/5 transition active:scale-[0.99]"
+            className="flex w-full gap-3 rounded-3xl bg-white p-3 text-left shadow-[0_2px_12px_rgba(60,30,0,0.08)] ring-1 ring-black/5 transition active:scale-[0.99]"
           >
             <img src={u.b.photo_url} alt="" loading="lazy" decoding="async"
-              className="h-20 w-20 flex-none rounded-xl bg-gray-100 object-cover" />
+              className="h-20 w-20 flex-none rounded-2xl bg-gray-100 object-cover" />
             <div className="min-w-0 flex-1 space-y-1">
               <div className="truncate font-semibold">{u.b.name || t('unnamed')}</div>
               <div className="line-clamp-2 text-sm text-gray-600">{u.b.food_menu}</div>

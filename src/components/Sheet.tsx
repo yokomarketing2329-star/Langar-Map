@@ -11,7 +11,7 @@ export default function Sheet({ title, onClose, children, tall }: Props) {
     <div className="fixed inset-0 z-[1000] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div
-        className={`relative flex w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-cream shadow-2xl sm:rounded-3xl ${
+        className={`relative flex w-full max-w-lg flex-col overflow-hidden rounded-t-[28px] bg-cream shadow-2xl sm:rounded-3xl ${
           tall ? 'h-[94dvh] sm:h-[90dvh]' : 'max-h-[92dvh]'
         } animate-[slideup_.25s_ease-out]`}
       >

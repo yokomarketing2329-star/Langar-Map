@@ -20,7 +20,29 @@ button:disabled { opacity: .6; }
 @keyframes slideup { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
 
 /* Map markers */
-.bm-pin { background: none; border: 0; filter: drop-shadow(0 2px 3px rgba(0,0,0,.35)); transition: transform .15s; }
+.bm-pin { background: none; border: 0; overflow: visible; }
+.bm-dot {
+  position: relative; display: flex; align-items: center; justify-content: center;
+  border-radius: 9999px; border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgba(60, 30, 0, .32);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.bm-dot--active { background: #F07F00; }
+.bm-dot--idle { background: #8B8F98; }
+.bm-dot--sel { box-shadow: 0 0 0 9px rgba(240, 127, 0, .22), 0 4px 12px rgba(60, 30, 0, .35); }
+.bm-dot--sel.bm-dot--idle { box-shadow: 0 0 0 9px rgba(139, 143, 152, .25), 0 4px 12px rgba(0, 0, 0, .3); }
+.bm-dot svg { width: 55%; height: 55%; }
+.bm-label {
+  position: absolute; left: 50%; bottom: calc(100% + 12px); transform: translateX(-50%);
+  max-width: 180px; padding: 5px 11px; border-radius: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  background: #fff; color: #2a2118; font-size: 12px; font-weight: 600; box-shadow: 0 2px 10px rgba(0, 0, 0, .18);
+}
+.bm-cluster {
+  display: flex; align-items: center; justify-content: center; border-radius: 9999px;
+  background: #7A3B0C; color: #fff; font-weight: 700; font-size: 15px; border: 3px solid #fff;
+  box-shadow: 0 0 0 5px rgba(122, 59, 12, .18), 0 2px 8px rgba(0, 0, 0, .3);
+}
+.bm-cluster--idle { background: #5f6470; box-shadow: 0 0 0 5px rgba(95, 100, 112, .18), 0 2px 8px rgba(0, 0, 0, .3); }
 .bm-you { background: none; border: 0; }
 .bm-you-dot {
   width: 20px; height: 20px; border-radius: 50%;
@@ -29,4 +51,7 @@ button:disabled { opacity: .6; }
   animation: bm-pulse 2s infinite;
 }
 @keyframes bm-pulse { 70% { box-shadow: 0 0 0 16px rgba(26,115,232,0), 0 1px 4px rgba(0,0,0,.4); } 100% { box-shadow: 0 0 0 0 rgba(26,115,232,0), 0 1px 4px rgba(0,0,0,.4); } }
-.leaflet-container { font-family: inherit; background: #e8e4da; }
+.leaflet-container { font-family: inherit; background: #ebe8e2; }
+.leaflet-control-attribution { background: rgba(255,255,255,.7) !important; font-size: 10px; backdrop-filter: blur(4px); }
+.leaflet-bottom { margin-bottom: 9.5rem; }
+@media (prefers-reduced-motion: reduce) { .bm-dot { transition: none; } .bm-you-dot { animation: none; } }

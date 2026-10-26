@@ -4,16 +4,38 @@ import 'leaflet/dist/leaflet.css'
 import type { Ui } from '../lib/view'
 import type { Bounds, LatLng } from '../lib/types'
 
-const GREEN = '#16803C'
-const GRAY = '#8B8F98'
+const BOWL =
+  '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+  '<path d="M3.5 12.5h17a8.5 8.5 0 0 1-17 0z" fill="#fff" fill-opacity=".25"/>' +
+  '<path d="M9 8.2c-.9-.9-.9-1.9 0-2.8M15 8.2c-.9-.9-.9-1.9 0-2.8"/></svg>'
 
-function pin(color: string, selected: boolean) {
-  const s = selected ? 46 : 38
+const CLUSTER_CELL_PX = 64
+const CLUSTER_MAX_ZOOM = 15
+
+const ESC: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }
+function esc(s: string) {
+  return s.replace(/[&<>"']/g, (c) => ESC[c] ?? c)
+}
+
+function pinIcon(active: boolean, selected: boolean, label: string | null) {
+  const size = selected ? 52 : 42
+  const cls = `bm-dot ${active ? 'bm-dot--active' : 'bm-dot--idle'} ${selected ? 'bm-dot--sel' : ''}`
+  const tag = selected && label ? `<div class="bm-label">${esc(label)}</div>` : ''
   return L.divIcon({
     className: 'bm-pin',
-    iconSize: [s, s],
-    iconAnchor: [s / 2, s],
-    html: `<svg width="${s}" height="${s}" viewBox="0 0 24 24"><path d="M12 1.5C7.3 1.5 3.8 5 3.8 9.5c0 6 8.2 13 8.2 13s8.2-7 8.2-13C20.2 5 16.7 1.5 12 1.5z" fill="${color}" stroke="#fff" stroke-width="1.6"/><circle cx="12" cy="9.5" r="3.2" fill="#fff"/></svg>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    html: `<div class="${cls}" style="width:${size}px;height:${size}px">${BOWL}</div>${tag}`,
+  })
+}
+
+function clusterIcon(count: number, hasActive: boolean) {
+  const size = count > 9 ? 50 : 44
+  return L.divIcon({
+    className: 'bm-pin',
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    html: `<div class="bm-cluster ${hasActive ? '' : 'bm-cluster--idle'}" style="width:${size}px;height:${size}px">${count}</div>`,
   })
 }
 
@@ -35,60 +57,111 @@ interface Props {
   onBounds: (b: Bounds) => void
 }
 
+interface Spec {
+  key: string
+  lat: number
+  lng: number
+  sig: string
+  icon: L.DivIcon
+  z: number
+  onClick: () => void
+}
+
 export default function MapView({ items, selectedId, userPos, focus, onSelect, onBounds }: Props) {
   const el = useRef<HTMLDivElement>(null)
   const map = useRef<L.Map | null>(null)
-  const markers = useRef<Map<string, L.Marker>>(new Map())
+  const markers = useRef<Map<string, { mk: L.Marker; sig: string }>>(new Map())
   const you = useRef<L.Marker | null>(null)
   const cb = useRef({ onSelect, onBounds })
   cb.current = { onSelect, onBounds }
+  const data = useRef({ items, selectedId })
+  data.current = { items, selectedId }
+  const draw = useRef<() => void>(() => {})
 
   // Create the map once.
   useEffect(() => {
     if (!el.current || map.current) return
-    const m = L.map(el.current, { zoomControl: false, attributionControl: true }).setView([30.9, 75.85], 12)
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    const m = L.map(el.current, { zoomControl: false, attributionControl: false }).setView([30.9, 75.85], 12)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      subdomains: 'abcd',
+      attribution:
+        '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>',
     }).addTo(m)
     L.control.zoom({ position: 'bottomright' }).addTo(m)
+    L.control.attribution({ position: 'bottomleft', prefix: false }).addTo(m)
+
+    // Draw pins; nearby pins merge into a numbered cluster when zoomed out.
+    draw.current = () => {
+      const { items: list, selectedId: sel } = data.current
+      const zoom = m.getZoom()
+      const specs: Spec[] = []
+      const cells = new Map<string, Ui[]>()
+      for (const u of list) {
+        if (u.status === 'expired') continue
+        if (u.b.short_id === sel || zoom >= CLUSTER_MAX_ZOOM) { specs.push(single(u, u.b.short_id === sel)); continue }
+        const p = m.project([u.b.latitude, u.b.longitude], zoom)
+        const k = `${Math.floor(p.x / CLUSTER_CELL_PX)}:${Math.floor(p.y / CLUSTER_CELL_PX)}`
+        const arr = cells.get(k)
+        if (arr) arr.push(u); else cells.set(k, [u])
+      }
+      for (const [k, arr] of cells) {
+        if (arr.length === 1) { specs.push(single(arr[0], false)); continue }
+        const lat = arr.reduce((s, u) => s + u.b.latitude, 0) / arr.length
+        const lng = arr.reduce((s, u) => s + u.b.longitude, 0) / arr.length
+        const hasActive = arr.some((u) => u.status === 'active')
+        specs.push({
+          key: `c:${k}`, lat, lng, sig: `c|${arr.length}|${hasActive}|${arr.map((u) => u.b.short_id).join(',')}`,
+          icon: clusterIcon(arr.length, hasActive), z: 300,
+          onClick: () => m.fitBounds(L.latLngBounds(arr.map((u) => [u.b.latitude, u.b.longitude] as [number, number])), { padding: [60, 60], maxZoom: 17 }),
+        })
+      }
+      const seen = new Set<string>()
+      for (const s of specs) {
+        seen.add(s.key)
+        const have = markers.current.get(s.key)
+        if (!have) {
+          const mk = L.marker([s.lat, s.lng], { icon: s.icon, keyboard: false, zIndexOffset: s.z })
+          mk.on('click', () => s.onClick())
+          mk.addTo(m)
+          markers.current.set(s.key, { mk, sig: s.sig })
+        } else {
+          have.mk.off('click').on('click', () => s.onClick())
+          have.mk.setZIndexOffset(s.z)
+          if (have.sig !== s.sig) { have.mk.setLatLng([s.lat, s.lng]).setIcon(s.icon); have.sig = s.sig }
+        }
+      }
+      for (const [key, v] of markers.current) {
+        if (!seen.has(key)) { v.mk.remove(); markers.current.delete(key) }
+      }
+    }
+
+    function single(u: Ui, sel: boolean): Spec {
+      const active = u.status === 'active'
+      const label = u.b.name
+      return {
+        key: `p:${u.b.short_id}`, lat: u.b.latitude, lng: u.b.longitude,
+        sig: `p|${active}|${sel}|${sel ? label : ''}|${u.b.latitude}|${u.b.longitude}`,
+        icon: pinIcon(active, sel, label), z: sel ? 1000 : active ? 500 : 100,
+        onClick: () => cb.current.onSelect(u.b.short_id),
+      }
+    }
+
     const report = () => {
       const b = m.getBounds()
       cb.current.onBounds({ minLat: b.getSouth(), maxLat: b.getNorth(), minLng: b.getWest(), maxLng: b.getEast() })
     }
     m.on('moveend', report)
+    m.on('zoomend', () => draw.current())
     map.current = m
     report()
+    draw.current()
     setTimeout(() => m.invalidateSize(), 100)
     return () => { m.remove(); map.current = null; markers.current.clear() }
   }, [])
 
-  // Sync markers (add/update/remove) — only touches what changed.
-  useEffect(() => {
-    const m = map.current
-    if (!m) return
-    const seen = new Set<string>()
-    for (const u of items) {
-      if (u.status === 'expired') continue
-      const id = u.b.short_id
-      seen.add(id)
-      const color = u.status === 'active' ? GREEN : GRAY
-      const sel = id === selectedId
-      let mk = markers.current.get(id)
-      if (!mk) {
-        mk = L.marker([u.b.latitude, u.b.longitude], { icon: pin(color, sel), keyboard: false })
-        mk.on('click', () => cb.current.onSelect(id))
-        mk.addTo(m)
-        markers.current.set(id, mk)
-      } else {
-        mk.setLatLng([u.b.latitude, u.b.longitude]).setIcon(pin(color, sel))
-      }
-      mk.setZIndexOffset(sel ? 1000 : u.status === 'active' ? 500 : 0)
-    }
-    for (const [id, mk] of markers.current) {
-      if (!seen.has(id)) { mk.remove(); markers.current.delete(id) }
-    }
-  }, [items, selectedId])
+  // Re-draw pins whenever the data or the selected place changes.
+  useEffect(() => { draw.current() }, [items, selectedId])
 
   // Blue dot for the user (kept only in this browser, never sent anywhere).
   useEffect(() => {
