@@ -79,7 +79,7 @@ export default function Admin() {
     return (
       <div className="mx-auto max-w-sm p-6">
         <h1 className="mb-1 text-2xl font-extrabold text-saffron-dark">Admin login</h1>
-        <p className="mb-4 text-sm text-gray-600">Bhandara Map moderation</p>
+        <p className="mb-4 text-sm text-gray-600">Langar Sewa Map moderation</p>
         <form onSubmit={login} className="space-y-3">
           <input className="w-full rounded-xl border p-3" type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="username" />
           <input className="w-full rounded-xl border p-3" type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
@@ -103,7 +103,7 @@ export default function Admin() {
   return (
     <div className="mx-auto max-w-4xl space-y-4 p-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-extrabold text-saffron-dark">Bhandara Map · Admin</h1>
+        <h1 className="text-2xl font-extrabold text-saffron-dark">Langar Sewa Map · Admin</h1>
         <div className="flex gap-2">
           <a href="/" className={`${btn} bg-white ring-1 ring-black/10`}>View app</a>
           <button className={`${btn} bg-gray-900 text-white`} onClick={() => supabase.auth.signOut()}>Sign out</button>

@@ -8,7 +8,7 @@ export const LANGS: { code: Lang; label: string }[] = [
 ]
 
 const en = {
-  app_name: 'Bhandara Map',
+  app_name: 'Langar Sewa Map',
   tagline: 'Find Food. Share Seva.',
   locate_me: 'Locate me',
   add_bhandara: 'Add Bhandara',
@@ -88,12 +88,12 @@ const en = {
   save: 'Save',
   saved: 'Saved.',
   link_copied: 'Link copied',
-  share_text: 'Free food (Bhandara) nearby — see it on Bhandara Map:',
+  share_text: 'Free food (Bhandara) nearby — see it on Langar Sewa Map:',
   install_app: 'Install App',
   ios_title: 'Install on iPhone / iPad',
   ios_step1: 'Open this page in Safari, then tap the Share button (square with an arrow).',
   ios_step2: 'Scroll down and tap “Add to Home Screen”.',
-  ios_step3: 'Tap “Add”. Bhandara Map now opens like a normal app.',
+  ios_step3: 'Tap “Add”. Langar Sewa Map now opens like a normal app.',
   ios_note: 'iPhone only allows this from Safari.',
   privacy: 'Privacy',
   privacy_text:
@@ -122,7 +122,7 @@ const en = {
 type Dict = typeof en
 
 const hi: Dict = {
-  app_name: 'भंडारा मैप',
+  app_name: 'लंगर सेवा मैप',
   tagline: 'भोजन खोजें। सेवा बाँटें।',
   locate_me: 'मेरी जगह',
   add_bhandara: 'भंडारा जोड़ें',
@@ -202,12 +202,12 @@ const hi: Dict = {
   save: 'सेव करें',
   saved: 'सेव हो गया।',
   link_copied: 'लिंक कॉपी हुआ',
-  share_text: 'पास में मुफ़्त भोजन (भंडारा) — भंडारा मैप पर देखें:',
+  share_text: 'पास में मुफ़्त भोजन (भंडारा) — लंगर सेवा मैप पर देखें:',
   install_app: 'ऐप इंस्टॉल करें',
   ios_title: 'iPhone / iPad पर इंस्टॉल करें',
   ios_step1: 'इस पेज को Safari में खोलें, फिर शेयर बटन (तीर वाला चौकोर) दबाएँ।',
   ios_step2: 'नीचे स्क्रॉल करें और “Add to Home Screen” दबाएँ।',
-  ios_step3: '“Add” दबाएँ। अब भंडारा मैप सामान्य ऐप की तरह खुलेगा।',
+  ios_step3: '“Add” दबाएँ। अब लंगर सेवा मैप सामान्य ऐप की तरह खुलेगा।',
   ios_note: 'iPhone पर यह सुविधा सिर्फ़ Safari में मिलती है।',
   privacy: 'गोपनीयता',
   privacy_text:
@@ -234,7 +234,7 @@ const hi: Dict = {
 }
 
 const pa: Dict = {
-  app_name: 'ਭੰਡਾਰਾ ਮੈਪ',
+  app_name: 'ਲੰਗਰ ਸੇਵਾ ਮੈਪ',
   tagline: 'ਭੋਜਨ ਲੱਭੋ। ਸੇਵਾ ਵੰਡੋ।',
   locate_me: 'ਮੇਰੀ ਥਾਂ',
   add_bhandara: 'ਭੰਡਾਰਾ ਜੋੜੋ',
@@ -314,12 +314,12 @@ const pa: Dict = {
   save: 'ਸੇਵ ਕਰੋ',
   saved: 'ਸੇਵ ਹੋ ਗਿਆ।',
   link_copied: 'ਲਿੰਕ ਕਾਪੀ ਹੋ ਗਿਆ',
-  share_text: 'ਨੇੜੇ ਮੁਫ਼ਤ ਭੋਜਨ (ਭੰਡਾਰਾ) — ਭੰਡਾਰਾ ਮੈਪ ’ਤੇ ਵੇਖੋ:',
+  share_text: 'ਨੇੜੇ ਮੁਫ਼ਤ ਭੋਜਨ (ਭੰਡਾਰਾ) — ਲੰਗਰ ਸੇਵਾ ਮੈਪ ’ਤੇ ਵੇਖੋ:',
   install_app: 'ਐਪ ਇੰਸਟਾਲ ਕਰੋ',
   ios_title: 'iPhone / iPad ’ਤੇ ਇੰਸਟਾਲ ਕਰੋ',
   ios_step1: 'ਇਹ ਪੇਜ Safari ਵਿੱਚ ਖੋਲ੍ਹੋ, ਫਿਰ ਸ਼ੇਅਰ ਬਟਨ (ਤੀਰ ਵਾਲਾ ਚੌਕੋਰ) ਦਬਾਓ।',
   ios_step2: 'ਥੱਲੇ ਸਕ੍ਰੌਲ ਕਰੋ ਅਤੇ “Add to Home Screen” ਦਬਾਓ।',
-  ios_step3: '“Add” ਦਬਾਓ। ਹੁਣ ਭੰਡਾਰਾ ਮੈਪ ਆਮ ਐਪ ਵਾਂਗ ਖੁੱਲ੍ਹੇਗਾ।',
+  ios_step3: '“Add” ਦਬਾਓ। ਹੁਣ ਲੰਗਰ ਸੇਵਾ ਮੈਪ ਆਮ ਐਪ ਵਾਂਗ ਖੁੱਲ੍ਹੇਗਾ।',
   ios_note: 'iPhone ’ਤੇ ਇਹ ਸਹੂਲਤ ਸਿਰਫ਼ Safari ਵਿੱਚ ਮਿਲਦੀ ਹੈ।',
   privacy: 'ਪਰਦੇਦਾਰੀ',
   privacy_text:
