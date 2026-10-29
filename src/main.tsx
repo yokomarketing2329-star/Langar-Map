@@ -3,9 +3,11 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import { I18nProvider } from './lib/i18n'
 import App from './App'
+import { trackDevice } from './lib/devices'
 
 const Admin = lazy(() => import('./pages/Admin'))
 const isAdminRoute = location.pathname.replace(/\/+$/, '') === '/admin'
+if (!isAdminRoute) trackDevice()   // anonymous install counter (see INSTALL_STATS_SETUP.md)
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

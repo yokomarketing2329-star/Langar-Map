@@ -16,6 +16,12 @@ interface Stats {
   daily: { day: string; submitted: number }[]; updates_daily: { day: string; updates: number }[]
 }
 
+interface DeviceStats {
+  devices_seen: number; installed: number; installed_active_7d: number; installed_active_30d: number
+  new_installs_today: number; visitors_today: number
+  installed_by_platform: Record<string, number>; installs_daily: { day: string; installs: number }[]
+}
+
 type Tab = 'overview' | 'locations' | 'reports'
 
 export default function Admin() {
@@ -26,6 +32,7 @@ export default function Admin() {
   const [msg, setMsg] = useState('')
   const [tab, setTab] = useState<Tab>('overview')
   const [stats, setStats] = useState<Stats | null>(null)
+  const [dev, setDev] = useState<DeviceStats | null>(null)
   const [rows, setRows] = useState<AdminRow[]>([])
   const [filter, setFilter] = useState<'all' | 'live' | 'expired'>('all')
   const [reports, setReports] = useState<ReportRow[]>([])
@@ -46,10 +53,12 @@ export default function Admin() {
 
   const load = useCallback(async () => {
     if (!isAdmin) return
-    const [s, l, r] = await Promise.all([
+    const [s, l, r, d] = await Promise.all([
       supabase.rpc('admin_stats'), supabase.rpc('admin_list', { p_filter: filter }), supabase.rpc('admin_reports'),
+      supabase.rpc('admin_device_stats'),
     ])
     if (s.data) setStats(s.data as Stats)
+    if (d.data) setDev(d.data as DeviceStats)   // stays empty until 003_devices.sql has been run
     if (l.data) setRows(l.data as AdminRow[])
     if (r.data) setReports(r.data as ReportRow[])
     if (s.error || l.error || r.error) setMsg((s.error || l.error || r.error)!.message)
@@ -79,7 +88,7 @@ export default function Admin() {
     return (
       <div className="mx-auto max-w-sm p-6">
         <h1 className="mb-1 text-2xl font-extrabold text-saffron-dark">Admin login</h1>
-        <p className="mb-4 text-sm text-gray-600">Langar Sewa Map moderation</p>
+        <p className="mb-4 text-sm text-gray-600">Bhandara Map moderation</p>
         <form onSubmit={login} className="space-y-3">
           <input className="w-full rounded-xl border p-3" type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="username" />
           <input className="w-full rounded-xl border p-3" type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
@@ -103,7 +112,7 @@ export default function Admin() {
   return (
     <div className="mx-auto max-w-4xl space-y-4 p-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-extrabold text-saffron-dark">Langar Sewa Map · Admin</h1>
+        <h1 className="text-2xl font-extrabold text-saffron-dark">Bhandara Map · Admin</h1>
         <div className="flex gap-2">
           <a href="/" className={`${btn} bg-white ring-1 ring-black/10`}>View app</a>
           <button className={`${btn} bg-gray-900 text-white`} onClick={() => supabase.auth.signOut()}>Sign out</button>
@@ -126,6 +135,33 @@ export default function Admin() {
               ['Pending reports', stats.pending_reports], ['Blocked visitors', stats.blocked_visitors]].map(([l, v]) => (
               <div key={String(l)} className={card}><div className="text-3xl font-extrabold">{v}</div><div className="text-sm text-gray-600">{l}</div></div>
             ))}
+          </div>
+          <div className={card}>
+            <h2 className="mb-1 font-bold">Installed app users</h2>
+            {dev ? (
+              <>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {[['Installed devices', dev.installed], ['Opened as app (7 days)', dev.installed_active_7d],
+                    ['Opened as app (30 days)', dev.installed_active_30d], ['New installs today', dev.new_installs_today]].map(([l, v]) => (
+                    <div key={String(l)} className="rounded-xl bg-gray-50 p-3"><div className="text-2xl font-extrabold">{v}</div><div className="text-xs text-gray-600">{l}</div></div>
+                  ))}
+                </div>
+                <p className="mt-3 text-sm text-gray-600">
+                  Visitors today: <b>{dev.visitors_today}</b> · All devices ever seen: <b>{dev.devices_seen}</b> · Installed by type:{' '}
+                  {Object.entries(dev.installed_by_platform).map(([k, n]) => `${k} ${n}`).join(', ') || 'none yet'}
+                </p>
+                {dev.installs_daily.length > 0 && (
+                  <table className="mt-2 w-full text-sm">
+                    <thead><tr className="text-left text-gray-500"><th>Day (IST)</th><th>New installs</th></tr></thead>
+                    <tbody>{dev.installs_daily.map((d) => <tr key={d.day} className="border-t"><td>{d.day}</td><td>{d.installs}</td></tr>)}</tbody>
+                  </table>
+                )}
+                <p className="mt-3 text-xs text-gray-500">
+                  Approximate: counted when the app is first seen running as an installed app. Uninstalls cannot be detected, so
+                  “Opened as app (30 days)” is the best measure of people really using it. Someone who clears their browser data is counted again.
+                </p>
+              </>
+            ) : <p className="text-sm text-gray-500">Not available yet. Run <code>003_devices.sql</code> in Supabase (see INSTALL_STATS_SETUP.md).</p>}
           </div>
           <div className={card}>
             <h2 className="mb-2 font-bold">Daily contributions (last 14 days, IST)</h2>
